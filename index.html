@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b132b" />
+  <meta name="description" content="Capture a business card, review the extracted contact, and send it to Google Sheets." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230b132b'/%3E%3Cpath d='M13 18h38v28H13z' fill='%2325d0a6'/%3E%3Cpath d='M19 27h18M19 35h28M19 43h20' stroke='%230b132b' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <title>CardCapture · Google Sheets</title>
+  <style>
+    :root { --ink:#0b132b; --muted:#667085; --line:#d9e1ee; --mint:#25d0a6; --soft:#f4f8fc; --danger:#b42318; }
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(135deg,#edf7f7,#f7f8ff 50%,#ecf3ff);color:var(--ink);font:16px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+    main{max-width:1050px;margin:auto;padding:28px 20px 48px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px}.brand{font-size:1.2rem;font-weight:800;letter-spacing:-.04em}.brand i{font-style:normal;color:#087d66}.status{font-size:.82rem;background:#e3faf4;color:#087d66;padding:7px 10px;border-radius:99px;font-weight:700}
+    h1{font-size:clamp(2rem,6vw,3.7rem);line-height:1;letter-spacing:-.065em;max-width:760px;margin:0 0 12px} .intro{color:var(--muted);max-width:600px;margin:0 0 28px}
+    .grid{display:grid;grid-template-columns:minmax(290px,.85fr) minmax(360px,1.15fr);gap:20px;align-items:start}.panel{background:#fff;border:1px solid rgba(15,39,79,.10);box-shadow:0 18px 48px rgba(29,49,85,.08);border-radius:22px;padding:22px}.step{font-size:.76rem;color:#087d66;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px}.panel h2{font-size:1.25rem;margin:0 0 6px;letter-spacing:-.03em}.help{margin:0 0 18px;color:var(--muted);font-size:.92rem}
+    .capture{height:270px;border:2px dashed #b7c7da;border-radius:15px;background:var(--soft);display:grid;place-items:center;overflow:hidden;position:relative}.capture img{width:100%;height:100%;object-fit:cover}.capture p{text-align:center;color:var(--muted);padding:20px}.capture span{display:block;font-size:2.2rem;margin-bottom:8px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}button,.file-label{font:inherit;font-weight:750;border-radius:11px;padding:13px 14px;border:0;cursor:pointer;text-align:center;transition:.18s transform,.18s opacity;background:var(--ink);color:#fff}button:hover,.file-label:hover{transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}.file-label{background:#e8eef7;color:var(--ink)}input[type=file]{display:none}.notice{font-size:.78rem;color:var(--muted);margin:13px 0 0}.loader{display:none;color:#087d66;font-size:.9rem;font-weight:700;margin-top:12px}.loader.show{display:block}
+    form{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{font-size:.78rem;font-weight:750;color:#344054;display:block}input{width:100%;display:block;margin-top:5px;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;color:var(--ink);font:inherit;font-size:.93rem}input:focus{outline:3px solid #c8f5e9;border-color:#25d0a6}.wide{grid-column:span 2}.empty{padding:36px 10px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}.result{display:none}.result.show{display:block}.json{background:#091326;color:#cfe9ff;border-radius:12px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;padding:12px;white-space:pre-wrap;margin:16px 0 0;max-height:160px;overflow:auto}.push{width:100%;margin-top:16px;background:#087d66}.push.success{background:#087d66}.message{margin:12px 0 0;padding:10px 12px;border-radius:10px;font-size:.9rem;display:none}.message.show{display:block}.message.ok{background:#e6f8f1;color:#066652}.message.err{background:#fff0ee;color:var(--danger)}details{margin-top:20px;border-top:1px solid var(--line);padding-top:15px}summary{cursor:pointer;font-weight:750;font-size:.9rem}.config{padding-top:12px}.config button{margin-top:10px;background:#e8eef7;color:var(--ink);padding:9px 12px;font-size:.85rem}
+    @media(max-width:760px){main{padding:20px 14px 32px}.grid{grid-template-columns:1fr}.panel{padding:18px;border-radius:17px}h1{font-size:2.45rem}.capture{height:245px}.top{margin-bottom:18px}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="top"><div class="brand">Card<span>Capture</span> <i>→ Google Sheets</i></div><div class="status">Private scan workflow</div></div>
+  <h1>Turn a card into a clean contact.</h1>
+  <p class="intro">Take a photo, check the extracted details, then push only the approved contact into your Google Sheet.</p>
+  <div class="grid">
+    <section class="panel">
+      <p class="step">01 · capture</p><h2>Business card photo</h2><p class="help">Use your phone camera or upload an existing image. Keep text sharp and well lit.</p>
+      <div class="capture" id="capture"><p><span>▣</span>Your card photo will appear here</p></div>
+      <div class="actions"><label class="file-label" for="camera">Open camera</label><label class="file-label" for="upload">Choose image</label></div>
+      <input id="camera" type="file" accept="image/*" capture="environment" /><input id="upload" type="file" accept="image/*" />
+      <div class="loader" id="loader">Reading card details…</div><p class="notice">The image stays in this browser for extraction. Review every field before saving.</p>
+    </section>
+    <section class="panel">
+      <p class="step">02 · review & save</p><h2>Contact details</h2><p class="help">Correct anything that needs attention, then send the JSON record to Google Sheets.</p>
+      <div class="empty" id="empty">Capture a business card to start.</div>
+      <div class="result" id="result">
+        <form id="contactForm">
+          <label>Name<input name="name" placeholder="Full name" /></label><label>Job title<input name="title" placeholder="Designation" /></label>
+          <label class="wide">Company<input name="company" placeholder="Company name" /></label>
+          <label>Phone<input name="phone" placeholder="+91 ..." /></label><label>Email<input name="email" type="email" placeholder="name@company.com" /></label>
+          <label class="wide">Website<input name="website" placeholder="https://..." /></label><label class="wide">Address<input name="address" placeholder="Office address" /></label>
+        </form>
+        <div class="json" id="json"></div><button class="push" id="push" type="button">Push approved details to Google Sheets</button><div class="message" id="message"></div>
+      </div>
+      <details><summary>Google Sheets connection</summary><div class="config"><label>Google Apps Script webhook URL<input id="webhook" type="url" placeholder="https://script.google.com/macros/.../exec" /></label><p class="notice">Your Google Apps Script endpoint is connected by default. Change it only if you deploy a replacement endpoint.</p><button id="saveConfig" type="button">Save endpoint on this device</button></div></details>
+    </section>
+  </div>
+</main>
+<script>
+const GOOGLE_SHEETS_ENDPOINT='https://script.google.com/macros/s/AKfycbyAkjG61vhQqIR_C-V_xQj3cn4u0tNzBgFzvhFyTSuBxV1hTQxklyfZtIt4D7YOyk8W/exec';
+const fields=['name','title','company','phone','email','website','address'];
+const $=id=>document.getElementById(id); const form=$('contactForm'); let rawText='';
+const OLD_GOOGLE_SHEETS_ENDPOINT='https://script.google.com/macros/s/AKfycbyKtQH2HzaLg4kn1zHES9vQwck-34SFjkDfd2tEQGTmWVvJIh0wY_waNfoq51FbUqtguQ/exec';
+const savedWebhook=localStorage.cardCaptureGoogleWebhook;
+$('webhook').value=savedWebhook&&savedWebhook!==OLD_GOOGLE_SHEETS_ENDPOINT?savedWebhook:GOOGLE_SHEETS_ENDPOINT;
+function values(){return Object.fromEntries(fields.map(k=>[k,form.elements[k].value.trim()]));}
+function renderJson(){ $('json').textContent=JSON.stringify({...values(),raw_ocr:rawText,scanned_at:new Date().toISOString()},null,2); }
+form.addEventListener('input',renderJson);
+function normalizeUrl(s){if(!s)return '';return /^https?:\/\//i.test(s)?s:'https://'+s;}
+function parse(text){
+ const lines=text.split(/\n+/).map(x=>x.trim()).filter(Boolean); const email=(text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)||[''])[0];
+ const phone=(text.match(/(?:\+?\d[\d\s().-]{7,}\d)/)||[''])[0]; const web=(text.match(/(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+/i)||[''])[0];
+ const usable=lines.filter(x=>!x.includes('@')&&!/www\.|https?:\/\//i.test(x)&&!/[\d]{5,}/.test(x));
+ const name=usable.find(x=>/^[A-Za-z.' -]{4,45}$/.test(x)&&x.split(' ').length>=2)||usable[0]||'';
+ const title=usable.find(x=>/manager|director|engineer|founder|officer|consultant|executive|sales|marketing|ceo|cto|president|designer|analyst/i.test(x))||'';
+ const company=usable.find(x=>x!==name&&x!==title&&(/pvt|ltd|llp|inc|corp|solutions|technologies|company|group|systems/i.test(x)))||usable.find(x=>x!==name&&x!==title)||'';
+ const address=lines.filter(x=>/\d{3,}|street|road|lane|nagar|india|floor|building|office|city|,/.test(x)&&x!==phone).join(', ');
+ return {name,title,company,phone:phone.replace(/\s+/g,' ').trim(),email,website:normalizeUrl(web),address};
+}
+async function jpeg(file){const bitmap=await createImageBitmap(file);const scale=Math.min(1,1800/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Image conversion failed')),'image/jpeg',.82));}
+async function readyImage(file){return jpeg(file);}
+async function scan(file){
+ $('loader').classList.add('show'); $('empty').style.display='none'; $('message').className='message';
+ try{const image=await readyImage(file);$('capture').innerHTML='<img alt="Captured business card" src="'+URL.createObjectURL(image)+'">';const r=await fetch('/api/extract',{method:'POST',headers:{'Content-Type':image.type||'image/jpeg'},body:image});const data=await r.json();if(!r.ok)throw Error(data.error||'Extraction failed');rawText=data.raw_ocr||'';fields.forEach(k=>form.elements[k].value=data[k]||'');$('result').classList.add('show');renderJson();}
+ catch(e){$('empty').style.display='block';$('empty').textContent='Could not extract details: '+e.message;}
+ finally{$('loader').classList.remove('show');}
+}
+['camera','upload'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.files[0])scan(e.target.files[0]);}));
+$('saveConfig').onclick=()=>{localStorage.cardCaptureGoogleWebhook=$('webhook').value.trim();alert('Google Sheets endpoint saved on this device.');};
+$('push').onclick=async()=>{const url=$('webhook').value.trim();const msg=$('message');if(!url){msg.textContent='Google Sheets webhook URL is missing.';msg.className='message err show';return;}const payload={...values(),raw_ocr:rawText,scanned_at:new Date().toISOString()};$('push').disabled=true;$('push').textContent='Pushing to Google Sheets…';try{await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});msg.textContent='Sent to Google Sheets — check the new row in a moment.';msg.className='message ok show';$('push').textContent='Sent successfully ✓';$('push').classList.add('success');}catch(e){msg.textContent='Could not send to Google Sheets. Check your internet connection and Apps Script URL.';msg.className='message err show';$('push').disabled=false;$('push').textContent='Push approved details to Google Sheets';}};
+</script>
+</body></html>

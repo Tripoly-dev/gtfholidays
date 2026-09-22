@@ -1,0 +1,6 @@
+.env.local
+.vercel
+node_modules
+site.tar.gz
+package-stage
+integration-test.json
